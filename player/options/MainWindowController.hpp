@@ -9,7 +9,6 @@
 
 #include "Resources.hpp"
 #include "config/CmsSettings.hpp"
-#include "config/PlayerSettings.hpp"
 
 class MainWindowController
 {
@@ -32,8 +31,7 @@ private:
 private:
     Glib::RefPtr<Gtk::Builder> ui_;
     Gtk::Window* mainWindow_;
-    CmsSettings cmsSettings_;
-    PlayerSettings playerSettings_;
+    CmsSettings settings_;
 
     Gtk::Entry* cmsAddressField_;
     Gtk::Entry* keyField_;

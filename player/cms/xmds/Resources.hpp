@@ -3,7 +3,7 @@
 #include <string>
 #include <string_view>
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 
 namespace XmdsResources
 {
@@ -103,7 +103,6 @@ namespace XmdsResources
             const std::string LayoutId = "layoutid";
             const std::string RegionId = "regionid";
             const std::string MediaId = "mediaid";
-            const std::string LastUpdate = "updated";
         }
     }
 
@@ -128,12 +127,6 @@ namespace XmdsResources
     namespace SubmitStats
     {
         const std::string_view Name = "SubmitStats";
-        const std::string Success = "success";
-    }
-
-    namespace NotifyStatus
-    {
-        const std::string_view Name = "NotifyStatus";
         const std::string Success = "success";
     }
 

@@ -1,7 +1,6 @@
 #include "FileSystem.hpp"
 
 #include "common/fs/FilePath.hpp"
-#include "common/fs/StorageUsageInfo.hpp"
 
 #include <boost/filesystem.hpp>
 #include <fstream>
@@ -78,10 +77,4 @@ void FileSystem::writeToFile(const FilePath& path, const std::string& content)
     std::ofstream out(path.string());
 
     out << content;
-}
-
-StorageUsageInfo FileSystem::storageUsageFor(const FilePath& path)
-{
-    auto spaceInfo = fs::space(path);
-    return StorageUsageInfo{spaceInfo.capacity, spaceInfo.available};
 }

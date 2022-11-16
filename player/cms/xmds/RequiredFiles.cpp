@@ -4,12 +4,12 @@
 
 namespace Resources = XmdsResources::RequiredFiles;
 
-const RequiredFilesSet<RegularFile>& RequiredFiles::Result::requiredFiles() const
+const FilesToDownload<RegularFile>& RequiredFiles::Result::requiredFiles() const
 {
     return m_requiredFiles;
 }
 
-const RequiredFilesSet<ResourceFile>& RequiredFiles::Result::requiredResources() const
+const FilesToDownload<ResourceFile>& RequiredFiles::Result::requiredResources() const
 {
     return m_requiredResources;
 }
@@ -71,7 +71,7 @@ RegularFile Soap::ResponseParser<RequiredFiles::Result>::parseRegularFile(const 
     auto fileType = attrs.get<std::string>(Resources::FileType);
     auto id = attrs.get<int>(Resources::RegularFile::Id);
     auto size = attrs.get<size_t>(Resources::RegularFile::Size);
-    auto md5 = Md5Hash{attrs.get<std::string>(Resources::RegularFile::MD5)};
+    auto md5 = attrs.get<std::string>(Resources::RegularFile::MD5);
     auto downloadType = toDownloadType(attrs.get<std::string>(Resources::RegularFile::DownloadType));
     auto [path, name] = parseFileNameAndPath(downloadType, fileType, attrs);
 
@@ -83,9 +83,8 @@ ResourceFile Soap::ResponseParser<RequiredFiles::Result>::parseResourceFile(cons
     auto layoutId = attrs.get<int>(Resources::ResourceFile::MediaId);
     auto regionId = attrs.get<int>(Resources::ResourceFile::RegionId);
     auto mediaId = attrs.get<int>(Resources::ResourceFile::MediaId);
-    auto lastUpdate = DateTime::utcFromTimestamp(attrs.get<int>(Resources::ResourceFile::LastUpdate));
 
-    return ResourceFile{layoutId, regionId, mediaId, lastUpdate};
+    return ResourceFile{layoutId, regionId, mediaId};
 }
 
 bool Soap::ResponseParser<RequiredFiles::Result>::isLayout(std::string_view type) const

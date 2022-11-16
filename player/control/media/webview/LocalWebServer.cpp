@@ -117,9 +117,6 @@ void Session::onRead(beast::error_code ec, std::size_t /*bytesTransferred*/)
     }
     else
     {
-        /* WebKitGTK sometimes resets connection but it's not a fatal error and we will reconnect */
-        if (ec == net::error::connection_reset) return;
-
         Log::error("[WebServer] Read Error: {}", ec.message());
     }
 }
@@ -138,9 +135,6 @@ void Session::onWrite(bool shouldBeClosed, beast::error_code ec, std::size_t /*b
     }
     else
     {
-        /* WebKitGTK sometimes resets connection but it's not a fatal error and we will reconnect */
-        if (ec == net::error::connection_reset || ec == net::error::broken_pipe) return;
-
         Log::error("[WebServer] Write Error: {}", ec.message());
     }
 }

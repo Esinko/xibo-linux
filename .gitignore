@@ -1,14 +1,11 @@
 *.autosave
 *.txt.user
 xibo-*.snap*
+snap
 gcov
 build*
-root
+WORK
 pch.py
 *.json
 commits_config
 snapcraft.login
-.history
-third_party
-*.swp
-exported.txt

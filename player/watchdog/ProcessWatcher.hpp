@@ -7,7 +7,7 @@
 class ProcessWatcher
 {
 public:
-    ProcessWatcher(const std::string& processBin, bool disableRestart);
+    ProcessWatcher(const std::string& processBin);
     void run();
 
 private:
@@ -20,5 +20,4 @@ private:
 
 private:
     std::string processPath_;
-    bool disableRestart_;
 };

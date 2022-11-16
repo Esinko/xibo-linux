@@ -22,15 +22,11 @@ void PlayerSettings::fromFile(const FilePath& file)
     try
     {
         PlayerSettingsSerializer serializer;
-        serializer.loadSettingsFrom(file, *this);
-    }
-    catch (PlayerRuntimeError& e)
-    {
-        Log::error("[PlayerSettings] Load error: {}", e.message());
+        serializer.loadFrom(file, *this);
     }
     catch (std::exception& e)
     {
-        Log::error("[PlayerSettings] Load error: {}", e.what());
+        Log::error(e.what());
     }
 }
 
@@ -39,15 +35,11 @@ void PlayerSettings::saveTo(const FilePath& file)
     try
     {
         PlayerSettingsSerializer serializer;
-        serializer.saveSettingsTo(file, *this);
-    }
-    catch (PlayerRuntimeError& e)
-    {
-        Log::error("[PlayerSettings] Save error: {}", e.message());
+        serializer.saveTo(file, *this);
     }
     catch (std::exception& e)
     {
-        Log::error("[PlayerSettings] Save error: {}", e.what());
+        Log::error(e.what());
     }
 }
 

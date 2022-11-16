@@ -11,9 +11,16 @@ struct MediaOptions
         std::string render;
     } type;
 
+    enum class StatPolicy
+    {
+        Disable,
+        Enable,
+        Inherit
+    };
+
     int id;
     Uri uri;
     int duration;
-    bool statEnabled;
+    StatPolicy statPolicy;
     MediaGeometry geometry;
 };

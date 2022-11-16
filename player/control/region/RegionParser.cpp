@@ -5,12 +5,10 @@
 
 #include "control/media/MediaParsersRepo.hpp"
 
-const int DefaultRegionZorder = 0;
+const int DefaultRegionZindex = 0;
 const bool DefaultRegionLoop = false;
 
 using namespace std::string_literals;
-
-RegionParser::RegionParser(bool globalStatEnabled) : globalStatEnabled_{globalStatEnabled} {}
 
 std::unique_ptr<Xibo::Region> RegionParser::regionFrom(const XmlNode& node)
 {
@@ -22,29 +20,28 @@ std::unique_ptr<Xibo::Region> RegionParser::regionFrom(const XmlNode& node)
 
         return region;
     }
-    catch (PlayerRuntimeError& e)
-    {
-        throw Error{"RegionParser - " + e.domain(), e.message()};
-    }
     catch (std::exception& e)
     {
-        throw Error{"RegionParser", e.what()};
+        throw RegionParser::Error{"RegionParser", "Region is invalid. Reason: "s + e.what()};
     }
 }
 
 RegionPosition RegionParser::positionFrom(const XmlNode& node)
 {
-    RegionPosition position;
-
-    position.left = static_cast<int>(node.get<float>(XlfResources::Region::Left));
-    position.top = static_cast<int>(node.get<float>(XlfResources::Region::Top));
-    position.zorder = node.get<int>(XlfResources::Region::Zindex, DefaultRegionZorder);
-    if (position.zorder < 0)
+    try
     {
-        position.zorder = DefaultRegionZorder;
-    }
+        RegionPosition position;
 
-    return position;
+        position.left = static_cast<int>(node.get<float>(XlfResources::Region::Left));
+        position.top = static_cast<int>(node.get<float>(XlfResources::Region::Top));
+        position.zorder = node.get<int>(XlfResources::Region::Zindex, DefaultRegionZindex);
+
+        return position;
+    }
+    catch (std::exception& e)
+    {
+        throw RegionParser::Error{"RegionParser", "Position is invalid. Reason: "s + e.what()};
+    }
 }
 
 RegionOptions RegionParser::optionsFrom(const XmlNode& node)
@@ -72,7 +69,7 @@ void RegionParser::addMedia(Xibo::Region& region, const XmlNode& regionNode)
             int width = region.view()->width();
             int height = region.view()->height();
 
-            region.addMedia(parser->mediaFrom(node, width, height, globalStatEnabled_));
+            region.addMedia(parser->mediaFrom(node, width, height));
         }
     }
 }

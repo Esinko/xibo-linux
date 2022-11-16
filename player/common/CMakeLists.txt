@@ -1,32 +1,42 @@
 project(common)
 
-find_package(Boost 1.70 EXACT REQUIRED system thread filesystem date_time)
+find_library(CRYPTOPP NAMES cryptopp) # find include directories
+find_package(spdlog 1.4.1 REQUIRED)
+find_package(Boost 1.70 EXACT REQUIRED filesystem system date_time thread)
 
-# TODO move to utils
+pkg_check_modules(DBUS REQUIRED dbus-1)
+pkg_check_modules(OPENSSL REQUIRED openssl)
+
+file(GLOB SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/crypto/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/dt/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fs/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/system/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/internal/*.*pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/types/uri/*.*pp
+)
+
 add_library(${PROJECT_NAME}
-    constants.hpp
-    Field.hpp
-    JoinableThread.hpp
-    NamedField.hpp
-    PlayerError.cpp
-    PlayerError.hpp
-    PlayerRuntimeError.hpp
-    Repository.hpp
-    Singleton.hpp
-    SoapField.hpp
-    Utils.hpp
+    ${SOURCES}
 )
-
 target_link_libraries(${PROJECT_NAME}
-    Boost::thread
-    Boost::system
+    ${CRYPTOPP}
+    ${OPENSSL_LINK_LIBRARIES}
+    ${DBUS_LINK_LIBRARIES}
+    ${GLIBMM_LINK_LIBRARIES}
+    ${Boost_LIBRARIES}
+    spdlog::spdlog
+)
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GLIBMM_INCLUDE_DIRS} # remove this workaround
+)
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${OPENSSL_INCLUDE_DIRS}
+    ${DBUS_INCLUDE_DIRS}
 )
 
-add_subdirectory(fs)
-add_subdirectory(dt)
-add_subdirectory(parsing)
-add_subdirectory(crypto)
-add_subdirectory(logger)
-add_subdirectory(system)
-add_subdirectory(types)
-add_subdirectory(storage)
+add_subdirectory(tests)

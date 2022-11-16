@@ -9,14 +9,9 @@
 #include "common/fs/Resource.hpp"
 
 const std::string DefaultColor = "#000";
-const bool DefaultStatsEnabled = true;
+const bool DefaultStatsEnabled = false;
 
-MainLayoutParser::Error::Error(const std::string& domain, int layoutId, const std::string& reason) :
-    PlayerRuntimeError{domain, "Layout " + std::to_string(layoutId) + " is invalid or missing. Reason: " + reason}
-{
-}
-
-MainLayoutParser::MainLayoutParser(bool globalStatsEnabled) : globalStatsEnabled_{globalStatsEnabled} {}
+using namespace std::string_literals;
 
 std::unique_ptr<Xibo::MainLayout> MainLayoutParser::parseBy(int layoutId)
 {
@@ -28,13 +23,10 @@ std::unique_ptr<Xibo::MainLayout> MainLayoutParser::parseBy(int layoutId)
         auto root = Parsing::xmlFrom(xlfFile);
         return layoutFrom(root.get_child(XlfResources::LayoutNode));
     }
-    catch (PlayerRuntimeError& e)
-    {
-        throw MainLayoutParser::Error{"LayoutParser - " + e.domain(), layoutId, e.message()};
-    }
     catch (std::exception& e)
     {
-        throw MainLayoutParser::Error{"LayoutParser", layoutId, e.what()};
+        std::string message = "Layout " + std::to_string(layoutId) + " is invalid or missing. Reason: ";
+        throw MainLayoutParser::Error("MainLayoutParser", message + e.what());
     }
 }
 
@@ -53,8 +45,7 @@ MainLayoutOptions MainLayoutParser::optionsFrom(const XmlNode& node)
 {
     auto width = node.get<int>(XlfResources::MainLayout::Width);
     auto height = node.get<int>(XlfResources::MainLayout::Height);
-    auto statsEnabled =
-        globalStatsEnabled_ && node.get<bool>(XlfResources::MainLayout::StatsEnabled, DefaultStatsEnabled);
+    auto statsEnabled = node.get<bool>(XlfResources::MainLayout::StatsEnabled, DefaultStatsEnabled);
 
     auto backgroundUri = backgroundUriFrom(node);
     auto backgroundColor = backgroundColorFrom(node);
@@ -94,7 +85,7 @@ void MainLayoutParser::addRegions(Xibo::MainLayout& layout, const XmlNode& layou
     {
         if (nodeName != XlfResources::RegionNode) continue;
 
-        RegionParser parser{globalStatsEnabled_};
+        RegionParser parser;
         auto position = parser.positionFrom(node);
         layout.addRegion(parser.regionFrom(node), position.left, position.top, position.zorder);
     }
