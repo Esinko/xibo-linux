@@ -6,9 +6,7 @@
 class PlayerSettingsSerializer : public SettingsSerializer<PlayerSettings>
 {
 public:
-    void loadSettingsFrom(const FilePath& file, PlayerSettings& settings) override;
-    void saveSettingsTo(const FilePath& file, const PlayerSettings& settings) override;
-
-protected:
-    XmlDocVersion currentVersion() const override;
+    void loadFrom(const FilePath& file, PlayerSettings& settings) override;
+    void loadFrom(const XmlNode& node, PlayerSettings& settings);
+    void saveTo(const FilePath& file, const PlayerSettings& settings) override;
 };

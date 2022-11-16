@@ -2,18 +2,14 @@
 
 #include "common/Utils.hpp"
 #include "common/system/System.hpp"
-#include "common/logger/Logging.hpp"
-#include "config/AppConfig.hpp"
 
 #include <boost/process/child.hpp>
 #include <boost/process/io.hpp>
 #include <regex>
 
-namespace bp = boost::process;
-
 HardwareKey HardwareKeyGenerator::generate()
 {
-    auto key = cpuid() + static_cast<std::string>(System::macAddress());
+    auto key = cpuid() + static_cast<std::string>(System::macAddress()) + volumeSerial();
 
     return HardwareKey{Md5Hash::fromString(key)};
 }
@@ -39,3 +35,37 @@ inline void HardwareKeyGenerator::nativeCpuid(unsigned int* eax,
     asm volatile("cpuid" : "=a"(*eax), "=b"(*ebx), "=c"(*ecx), "=d"(*edx) : "0"(*eax), "2"(*ecx) : "memory");
 }
 
+std::string HardwareKeyGenerator::volumeSerial()
+{
+    namespace bp = boost::process;
+
+    bp::pipe volumeInfo;
+    bp::ipstream stream;
+
+    bp::child udevadm("udevadm info /dev/sda", bp::std_out > volumeInfo);
+    bp::child grep("grep ID_SERIAL_SHORT", bp::std_in<volumeInfo, bp::std_out> stream);
+
+    auto volumeSerial = retrieveVolumeSerial(stream);
+
+    udevadm.wait();
+    grep.wait();
+
+    return volumeSerial;
+}
+
+std::string HardwareKeyGenerator::retrieveVolumeSerial(boost::process::ipstream& stream)
+{
+    const int SERIAL_CAPTURE_GROUP = 1;
+    const std::regex SERIAL_REGEX{"ID_SERIAL_SHORT=(.+)"};
+
+    std::string line;
+    std::getline(stream, line);
+
+    std::smatch result;
+    if (std::regex_search(line, result, SERIAL_REGEX))
+    {
+        return result[SERIAL_CAPTURE_GROUP].str();
+    }
+
+    return {};
+}

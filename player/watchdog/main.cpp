@@ -5,8 +5,6 @@
 
 #include "ProcessWatcher.hpp"
 
-#include <boost/program_options.hpp>
-
 void setupNewConfigDir()
 {
 #ifdef SNAP_ENABLED
@@ -41,37 +39,20 @@ void setupNewConfigDir()
     }
 #endif
 }
-int main(int argc, char** argv)
+
+int main()
 {
     setupNewConfigDir();
 
-    try
+    if (FileSystem::exists(AppConfig::cmsSettingsPath()))
     {
-        boost::program_options::options_description desc{"Options"};
-        desc.add_options()("disable-restart", "Don't restart player (disable watchdog)");
-        desc.add_options()("config-app", "Run config application");
-
-        boost::program_options::variables_map vm;
-        store(parse_command_line(argc, argv, desc), vm);
-
-#if defined(SNAP_ENABLED)
-        std::cout << "Running in SNAP environment" << std::endl;
-#endif
-
-        if (FileSystem::exists(AppConfig::cmsSettingsPath()) && vm.count("config-app") == 0)
-        {
-            ProcessWatcher playerWatcher{AppConfig::playerBinary(), vm.count("disable-restart") > 0};
-            playerWatcher.run();
-        }
-        else
-        {
-            boost::process::child optionsBin{AppConfig::optionsBinary()};
-            optionsBin.wait();
-        }
+        ProcessWatcher playerWatcher{AppConfig::playerBinary()};
+        playerWatcher.run();
     }
-    catch (std::exception& e)
+    else
     {
-        std::cout << e.what() << std::endl;
+        boost::process::child optionsBin{AppConfig::optionsBinary()};
+        optionsBin.wait();
     }
     return 0;
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 #include "control/layout/MainLayout.hpp"
 #include "control/layout/MainLayoutOptions.hpp"
 #include "control/widgets/Image.hpp"
@@ -10,12 +10,11 @@ class FilePath;
 class MainLayoutParser
 {
 public:
-    MainLayoutParser(bool globalStatsEnabled);
     virtual ~MainLayoutParser() = default;
 
     struct Error : PlayerRuntimeError
     {
-        Error(const std::string& domain, int layoutId, const std::string& reason);
+        using PlayerRuntimeError::PlayerRuntimeError;
     };
 
     std::unique_ptr<Xibo::MainLayout> parseBy(int layoutId);
@@ -30,6 +29,5 @@ protected:
     void addRegions(Xibo::MainLayout& layout, const XmlNode& node);
 
 private:
-    bool globalStatsEnabled_;
     int layoutId_;
 };

@@ -2,7 +2,7 @@
 
 #include "MainLoop.hpp"
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 #include "common/crypto/RsaManager.hpp"
 #include "common/dt/DateTime.hpp"
 #include "common/logger/Logging.hpp"
@@ -13,8 +13,7 @@ const size_t KEY_PART = 1;
 const size_t MESSAGE_PART = 2;
 
 const char* const HearbeatChannel = "H";
-
-XmrManager::XmrManager(const XmrChannel& mainChannel) : mainChannel_(static_cast<std::string>(mainChannel)) {}
+const Zmq::Channels XmrChannels{AppConfig::mainXmrChannel(), HearbeatChannel};
 
 // TODO: strong type
 void XmrManager::connect(const std::string& host)
@@ -24,7 +23,7 @@ void XmrManager::connect(const std::string& host)
     info_.host = host;
     subscriber_.messageReceived().connect(
         [this](const Zmq::MultiPartMessage& message) { processMultipartMessage(message); });
-    subscriber_.run(host, Zmq::Channels{mainChannel_, HearbeatChannel});
+    subscriber_.run(host, XmrChannels);
 }
 
 void XmrManager::stop()
@@ -49,7 +48,7 @@ XmrStatus XmrManager::status()
 
 void XmrManager::processMultipartMessage(const Zmq::MultiPartMessage& multipart)
 {
-    if (multipart[CHANNEL_PART] == mainChannel_)
+    if (multipart[CHANNEL_PART] == AppConfig::mainXmrChannel())
     {
         try
         {

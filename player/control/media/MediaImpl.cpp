@@ -1,12 +1,18 @@
 #include "control/media/MediaImpl.hpp"
-#include "common/constants.hpp"
+#include "constants.hpp"
 
 MediaImpl::MediaImpl(const MediaOptions& options) :
     options_(options),
     timer_(std::make_unique<Timer>()),
+    statEnabled_(false),
     playing_(false)
 {
     assert(timer_);
+
+    if (options_.statPolicy != MediaOptions::StatPolicy::Inherit)
+    {
+        statEnabled_ = options_.statPolicy == MediaOptions::StatPolicy::Enable ? true : false;
+    }
 }
 
 void MediaImpl::setWidget(const std::shared_ptr<Xibo::Widget>& widget)
@@ -28,17 +34,12 @@ void MediaImpl::start()
 {
     if (playing_) return;
 
+    stat_.clear();
+
     playing_ = true;
-
-    if (options_.statEnabled)
-    {
-        interval_.clear();
-        interval_.started = DateTime::now();
-    }
-
+    stat_.started = DateTime::now();
     startTimer(options_.duration);
     startAttachedMedia();
-
     onStarted();
 }
 
@@ -71,22 +72,29 @@ void MediaImpl::stop()
     if (!playing_) return;
 
     playing_ = false;
-
-    if (options_.statEnabled)
-    {
-        interval_.finished = DateTime::now();
-        statReady_(interval_);
-    }
-
+    stat_.finished = DateTime::now();
     timer_->stop();
     stopAttachedMedia();
-
     onStopped();
+    statReady_(stat_);
+}
+
+void MediaImpl::statEnabled(bool enable)
+{
+    if (options_.statPolicy == MediaOptions::StatPolicy::Inherit)
+    {
+        statEnabled_ = enable;
+    }
 }
 
 bool MediaImpl::statEnabled() const
 {
-    return options_.statEnabled;
+    return statEnabled_;
+}
+
+MediaOptions::StatPolicy MediaImpl::statPolicy() const
+{
+    return options_.statPolicy;
 }
 
 int MediaImpl::id() const

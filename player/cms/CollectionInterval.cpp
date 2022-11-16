@@ -2,39 +2,28 @@
 
 #include "MainLoop.hpp"
 
-#include "NotifyStatusInfo.hpp"
-#include "common/PlayerRuntimeError.hpp"
 #include "common/dt/DateTime.hpp"
 #include "common/dt/Timer.hpp"
-#include "common/fs/FileSystem.hpp"
-#include "common/fs/StorageUsageInfo.hpp"
 #include "common/logger/Logging.hpp"
 #include "common/logger/XmlLogsRetriever.hpp"
-#include "common/storage/FileCache.hpp"
-#include "common/system/System.hpp"
 #include "config/AppConfig.hpp"
 
 #include "cms/xmds/XmdsRequestSender.hpp"
-#include "stat/Recorder.hpp"
-#include "stat/records/XmlFormatter.hpp"
+#include "stat/StatsFormatter.hpp"
+#include "stat/StatsRecorder.hpp"
 
 namespace ph = std::placeholders;
 
 CollectionInterval::CollectionInterval(XmdsRequestSender& xmdsSender,
-                                       Stats::Recorder& statsRecorder,
-                                       FileCache& fileCache,
-                                       const FilePath& resourceDirectory,
-                                       const std::string& displayName) :
+                                       StatsRecorder& statsRecorder,
+                                       FileCache& fileCache) :
     xmdsSender_{xmdsSender},
     statsRecorder_{statsRecorder},
     fileCache_{fileCache},
-    resourceDirectory_{resourceDirectory},
-    displayName_{displayName},
     intervalTimer_{std::make_unique<Timer>()},
     collectInterval_{DefaultInterval},
     running_{false},
-    status_{},
-    currentLayoutId_{EmptyLayoutId}
+    status_{}
 {
     assert(intervalTimer_);
 }
@@ -63,7 +52,7 @@ void CollectionInterval::collectNow()
             Log::debug("[CollectionInterval] Started");
 
             auto registerDisplayResult =
-                xmdsSender_.registerDisplay(AppConfig::codeVersion(), AppConfig::releaseVersion(), displayName_).get();
+                xmdsSender_.registerDisplay(AppConfig::codeVersion(), AppConfig::version(), "Display").get();
             onDisplayRegistered(registerDisplayResult);
         });
     }
@@ -99,9 +88,17 @@ void CollectionInterval::onDisplayRegistered(const ResponseResult<RegisterDispla
             onSchedule(scheduleResult);
             onRequiredFiles(requiredFilesResult);
 
-            submitLogs();
-            submitStats();
-            notifyStatus();
+            XmlLogsRetriever logsRetriever;
+            auto submitLogsResult = xmdsSender_.submitLogs(logsRetriever.retrieveLogs()).get();
+            onSubmitted("SubmitLogs", submitLogsResult);
+
+            if (!statsRecorder_.empty())
+            {
+                StatsFormatter formatter;
+                auto submitStatsResult = xmdsSender_.submitStats(formatter.toXml(statsRecorder_.records())).get();
+                statsRecorder_.clear();
+                onSubmitted("SubmitStats", submitStatsResult);
+            }
         }
         sessionFinished(displayError);
     }
@@ -109,11 +106,6 @@ void CollectionInterval::onDisplayRegistered(const ResponseResult<RegisterDispla
     {
         sessionFinished(error);
     }
-}
-
-void CollectionInterval::setCurrentLayoutId(const LayoutId& currentLayoutId)
-{
-    currentLayoutId_ = currentLayoutId;
 }
 
 PlayerError CollectionInterval::displayStatus(const RegisterDisplay::Result::Status& status)
@@ -181,10 +173,8 @@ void CollectionInterval::onRequiredFiles(const ResponseResult<RequiredFiles::Res
         auto resourcesResult = downloader.download(resources);
         auto filesResult = downloader.download(files);
 
-        resourcesResult.wait();
-        filesResult.wait();
-
-        updateMediaInventory(result);
+        updateMediaInventory(filesResult.get());
+        updateMediaInventory(resourcesResult.get());
 
         MainLoop::pushToUiThread([this]() { filesDownloaded_(); });
     }
@@ -192,20 +182,6 @@ void CollectionInterval::onRequiredFiles(const ResponseResult<RequiredFiles::Res
     {
         sessionFinished(error);
     }
-}
-
-void CollectionInterval::updateMediaInventory(const RequiredFiles::Result& result)
-{
-    MediaInventoryItems items;
-    for (auto&& file : result.requiredFiles())
-    {
-        items.emplace_back(file, fileCache_.valid(file.name()));
-    }
-    for (auto&& file : result.requiredResources())
-    {
-        items.emplace_back(file, fileCache_.valid(file.name()));
-    }
-    onSubmitted("MediaInventory", xmdsSender_.mediaInventory(std::move(items)).get());
 }
 
 void CollectionInterval::onSchedule(const ResponseResult<Schedule::Result>& schedule)
@@ -224,55 +200,9 @@ void CollectionInterval::onSchedule(const ResponseResult<Schedule::Result>& sche
     }
 }
 
-void CollectionInterval::submitLogs()
+void CollectionInterval::updateMediaInventory(MediaInventoryItems&& items)
 {
-    XmlLogsRetriever logsRetriever;
-    auto submitLogsResult = xmdsSender_.submitLogs(logsRetriever.retrieveLogs()).get();
-    onSubmitted("SubmitLogs", submitLogsResult);
-}
-
-void CollectionInterval::submitStats()
-{
-    try
-    {
-        const auto recordsCount = statsRecorder_.recordsCount();
-        if (recordsCount > 0)
-        {
-            const auto RecordsToSend = [recordsCount]() -> size_t {
-                if (recordsCount > 500)
-                    return 300;
-                else
-                    return recordsCount > 50 ? 50 : recordsCount;
-            }();
-
-            Log::debug("[CollectionInterval] Total records: {} Records to send {}", recordsCount, RecordsToSend);
-
-            auto records = statsRecorder_.records(RecordsToSend);
-            statsRecorder_.removeFromQueue(RecordsToSend);
-
-            Stats::XmlFormatter formatter;
-            auto submitStatsResult = xmdsSender_.submitStats(formatter.format(records)).get();
-            onSubmitted("SubmitStats", submitStatsResult);
-        }
-    }
-    catch (const std::exception& e)
-    {
-        Log::error("[CollectionInterval] {}", e.what());
-        Log::error("[CollectionInterval] Failed to submit stats");
-    }
-}
-
-void CollectionInterval::notifyStatus()
-{
-    NotifyStatusInfo notifyInfo;
-    // FIXME: store it in collection interval until XMDS refactoring
-    notifyInfo.currentLayoutId = currentLayoutId_;
-    notifyInfo.deviceName = System::hostname();
-    notifyInfo.spaceUsageInfo = FileSystem::storageUsageFor(resourceDirectory_);
-    notifyInfo.timezone = DateTime::currentTimezone();
-
-    auto notifyStatusResult = xmdsSender_.notifyStatus(notifyInfo.string()).get();
-    onSubmitted("NotifyStatus", notifyStatusResult);
+    onSubmitted("MediaInventory", xmdsSender_.mediaInventory(std::move(items)).get());
 }
 
 template <typename Result>

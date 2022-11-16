@@ -2,14 +2,14 @@
 
 #include "control/media/MediaOptions.hpp"
 #include "control/widgets/Widget.hpp"
-#include "stat/PlayingTime.hpp"
+#include "stat/PlayingStat.hpp"
 
 #include <boost/signals2/signal.hpp>
 
 class TransitionExecutor;
 
 using SignalMediaFinished = boost::signals2::signal<void()>;
-using SignalMediaStatReady = boost::signals2::signal<void(Stats::PlayingTime)>;
+using SignalMediaStatReady = boost::signals2::signal<void(PlayingStat)>;
 
 namespace Xibo
 {
@@ -24,7 +24,9 @@ namespace Xibo
         virtual void start() = 0;
         virtual void stop() = 0;
 
+        virtual void statEnabled(bool enable) = 0;
         virtual bool statEnabled() const = 0;
+        virtual MediaOptions::StatPolicy statPolicy() const = 0;
         virtual int id() const = 0;
 
         virtual void inTransition(std::unique_ptr<TransitionExecutor>&& transition) = 0;

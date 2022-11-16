@@ -1,7 +1,7 @@
 #pragma once
 
 #include "control/ApplicationWindow.hpp"
-#include "control/status/GeneralInfo.hpp"
+#include "control/GeneralInfo.hpp"
 #include "control/widgets/gtk/WindowGtk.hpp"
 
 #include "config/CmsSettings.hpp"
@@ -21,10 +21,7 @@ class PlayerError;
 class XmrManager;
 using ApplicationWindowGtk = ApplicationWindow<WindowGtk>;
 class LocalWebServer;
-namespace Stats
-{
-    class Recorder;
-}
+class StatsRecorder;
 class LayoutsManager;
 class XiboApp;
 struct PlayerSettings;
@@ -50,7 +47,6 @@ private:
 
     void onCollectionFinished(const PlayerError& error);
     GeneralInfo collectGeneralInfo();
-    void checkResourceDirectory();
 
 private:
     PlayerSettings playerSettings_;
@@ -62,7 +58,7 @@ private:
     std::unique_ptr<CollectionInterval> collectionInterval_;
     std::unique_ptr<ScreenShotInterval> screenShotInterval_;
     std::unique_ptr<XmdsRequestSender> xmdsManager_;
-    std::unique_ptr<Stats::Recorder> statsRecorder_;
+    std::unique_ptr<StatsRecorder> statsRecorder_;
     std::unique_ptr<XmrManager> xmrManager_;
     std::shared_ptr<ApplicationWindowGtk> mainWindow_;
     std::shared_ptr<LocalWebServer> webserver_;

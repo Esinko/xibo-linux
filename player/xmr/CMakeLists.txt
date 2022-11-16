@@ -6,8 +6,6 @@ add_library(${PROJECT_NAME}
     XmrManager.cpp
     XmrManager.hpp
     XmrStatus.hpp
-    XmrChannel.hpp
-    XmrChannel.cpp
     zmq/Context.cpp
     zmq/Context.cpp
     zmq/Exception.cpp
@@ -19,16 +17,14 @@ add_library(${PROJECT_NAME}
     zmq/Subscriber.cpp
     zmq/Subscriber.hpp
 )
-
 target_link_libraries(${PROJECT_NAME}
     common
     ${ZMQ_LINK_LIBRARIES}
 )
-
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${GTKMM_INCLUDE_DIRS} # TODO remove this workaround
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GTKMM_INCLUDE_DIRS} # remove this workaround
 )
-
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${ZMQ_INCLUDE_DIRS}
 )

@@ -1,8 +1,6 @@
 #include "ProcessWatcher.hpp"
 
-ProcessWatcher::ProcessWatcher(const std::string& processBin, bool disableRestart) :
-    processPath_{processBin},
-    disableRestart_{disableRestart}
+ProcessWatcher::ProcessWatcher(const std::string& processBin) : processPath_{processBin}
 {
     setupSignalHandler();
 }
@@ -16,7 +14,7 @@ void ProcessWatcher::run()
         child.wait();
         std::cerr << "Player exited with code " << child.exit_code() << std::endl;
 
-        if (terminate || disableRestart_) break;
+        if (terminate) break;
         sleep(3);
     }
 }

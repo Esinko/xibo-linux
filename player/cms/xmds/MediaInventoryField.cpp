@@ -1,6 +1,6 @@
 #include "MediaInventoryField.hpp"
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 
 std::string_view SoapField<MediaInventoryItems>::type() const
 {

@@ -17,7 +17,9 @@ public:
     void start() override;
     void stop() override;
 
+    void statEnabled(bool enable) override;
     bool statEnabled() const override;
+    MediaOptions::StatPolicy statPolicy() const override;
     int id() const override;
 
     void inTransition(std::unique_ptr<TransitionExecutor>&& transition) override;
@@ -45,7 +47,8 @@ private:
 private:
     MediaOptions options_;
     std::unique_ptr<Timer> timer_;
-    Stats::PlayingTime interval_;
+    PlayingStat stat_;
+    bool statEnabled_;
     bool playing_;
 
     std::shared_ptr<Xibo::Widget> widget_;

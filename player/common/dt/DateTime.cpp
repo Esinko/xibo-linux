@@ -3,8 +3,6 @@
 #include <boost/date_time/c_local_time_adjustor.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "date/tz.h"
-
 DateTime::DateTime(const DateTime::Date& date, const DateTime::Time& td) : ptime_{date, td} {}
 
 DateTime::DateTime(const boost::posix_time::ptime& ptime) : ptime_(ptime) {}
@@ -51,11 +49,6 @@ std::string DateTime::string() const
     return boost::posix_time::to_simple_string(ptime_);
 }
 
-time_t DateTime::timestamp() const
-{
-    return boost::posix_time::to_time_t(ptime_);
-}
-
 DateTime DateTime::fromString(const std::string& str)
 {
     return DateTime{boost::posix_time::time_from_string(str)};
@@ -71,11 +64,6 @@ DateTime DateTime::fromIsoExtendedString(const std::string& str)
     iss >> dt;
 
     return DateTime{dt};
-}
-
-std::string DateTime::currentTimezone()
-{
-    return date::current_zone()->name();
 }
 
 bool DateTime::valid() const

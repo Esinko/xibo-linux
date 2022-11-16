@@ -5,21 +5,21 @@
 #include "cms/xmds/Soap.hpp"
 
 #include "common/SoapField.hpp"
-#include "common/storage/RequiredItems.hpp"
+#include "networking/RequiredItems.hpp"
 
 namespace RequiredFiles
 {
     struct Result
     {
-        const RequiredFilesSet<RegularFile>& requiredFiles() const;
-        const RequiredFilesSet<ResourceFile>& requiredResources() const;
+        const FilesToDownload<RegularFile>& requiredFiles() const;
+        const FilesToDownload<ResourceFile>& requiredResources() const;
 
         void addFile(RegularFile&& file);
         void addResource(ResourceFile&& resource);
 
     private:
-        RequiredFilesSet<RegularFile> m_requiredFiles;
-        RequiredFilesSet<ResourceFile> m_requiredResources;
+        FilesToDownload<RegularFile> m_requiredFiles;
+        FilesToDownload<ResourceFile> m_requiredResources;
     };
 
     struct Request

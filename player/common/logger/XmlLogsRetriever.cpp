@@ -1,6 +1,6 @@
 #include "XmlLogsRetriever.hpp"
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 #include "common/logger/Logging.hpp"
 #include "common/logger/XmlLogsRepo.hpp"
 
@@ -29,8 +29,8 @@ std::string XmlLogsRetriever::formatLogs(const std::string& logs)
     }
     catch (std::exception& e)
     {
-        Log::error("[XmlLogsRetriever] Format logs error: {}", e.what());
-        Log::trace("[XmlLogsRetriever] {}", logs);
+        Log::error("[XmlLogsRetriever] Format logs error: ", e.what());
+        Log::trace(logs);
     }
 
     return {};

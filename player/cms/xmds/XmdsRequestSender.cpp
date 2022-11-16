@@ -5,7 +5,7 @@
 
 #include "common/crypto/RsaManager.hpp"
 #include "common/system/System.hpp"
-#include "xmr/XmrChannel.hpp"
+#include "config/AppConfig.hpp"
 
 const std::string DefaultClientType = "linux";
 const std::string XmdsTarget = "/xmds.php?v=5";
@@ -14,7 +14,6 @@ XmdsRequestSender::XmdsRequestSender(const std::string& host,
                                      const std::string& serverKey,
                                      const std::string& hardwareKey) :
     uri_(Uri::fromString(host + XmdsTarget)),
-    host_(host),
     serverKey_(serverKey),
     hardwareKey_(hardwareKey)
 {
@@ -31,7 +30,7 @@ FutureResponseResult<RegisterDisplay::Result> XmdsRequestSender::registerDisplay
     request.clientCode = clientCode;
     request.clientVersion = clientVersion;
     request.macAddress = static_cast<std::string>(System::macAddress());
-    request.xmrChannel = static_cast<std::string>(XmrChannel::fromCmsSettings(host_, serverKey_, hardwareKey_));
+    request.xmrChannel = AppConfig::mainXmrChannel();
     request.xmrPubKey = CryptoUtils::keyToString(RsaManager::instance().publicKey());
     request.displayName = displayName;
 
@@ -122,14 +121,4 @@ FutureResponseResult<SubmitScreenShot::Result> XmdsRequestSender::submitScreenSh
     request.screenShot = screenShot;
 
     return SoapRequestHelper::sendRequest<SubmitScreenShot::Result>(uri_, request);
-}
-
-FutureResponseResult<NotifyStatus::Result> XmdsRequestSender::notifyStatus(const std::string& status)
-{
-    NotifyStatus::Request request;
-    request.serverKey = serverKey_;
-    request.hardwareKey = hardwareKey_;
-    request.status = status;
-
-    return SoapRequestHelper::sendRequest<NotifyStatus::Result>(uri_, request);
 }

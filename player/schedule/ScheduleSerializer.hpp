@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/parsing/Parsing.hpp"
+#include "common/Parsing.hpp"
 #include "common/PlayerRuntimeError.hpp"
 #include "schedule/LayoutSchedule.hpp"
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common/dt/DateTime.hpp"
-#include "xmr/XmrChannel.hpp"
 #include "xmr/XmrStatus.hpp"
 #include "xmr/zmq/Subscriber.hpp"
 
@@ -20,8 +19,6 @@ using ScreenshotAction = boost::signals2::signal<void()>;
 class XmrManager
 {
 public:
-    XmrManager(const XmrChannel& mainChannel);
-
     void connect(const std::string& host);
     void stop();
 
@@ -37,7 +34,6 @@ private:
     bool isMessageExpired(const XmrMessage& message);
 
 private:
-    std::string mainChannel_;
     Zmq::Subscriber subscriber_;
     CollectionIntervalAction collectionIntervalAction_;
     ScreenshotAction screenshotAction_;

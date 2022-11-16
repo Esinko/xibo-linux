@@ -1,53 +1,27 @@
-# Xibo for Linux
+# XiboLinux
 [![xibo-player](https://snapcraft.io/xibo-player/badge.svg)](https://snapcraft.io/xibo-player)
 
-Xibo for Linux is a Digital Signage Player for [Xibo](https://xibo.org.uk).
-
-It is in its early stages of development and supports a subset of Xibo's overall features. It can be used in production, but should be thoroughly tested with the intended content. It is not recommended to assume that any of Xibo's features will function. Please test yourself to confirm.
-
-To discuss this Player with us, please [join our community](https://community.xibo.org.uk/c/support/linux-player).
-
-
-
-# Installation
-
-Installation and upgrade instructions can be found [here](https://xibo.org.uk/docs/setup/xibo-for-linux-installation).
-
-
-
-# Contributing
-
-We use GitHub Issues to track development and the next milestone is full of issues for which we would happily accept contributions. In addition, if a Xibo feature you want is not mile-stoned, or mile-stoned against a later version, please get in touch if you'd like to work on it. We maintain a [Kanban Board](https://github.com/xibosignage/xibo-linux/projects/1) to ensure we're not doing overlapping work.
-
-Please check that you're happy for your work to be available under the project licence - the AGPLv3 or later.
-
-Let us know you'd like to contribute by [joining our community](https://community.xibo.org.uk/c/support/linux-player).
-
-
-# Build
-If you would like to work on the Player you can build it locally using the instructions below.
-
 ## Building from sources
-We recommend you use snapcraft to build Xibo.
 
-### Building with Snapcraft
+### Building manually
 
-- Install snapcraft, making sure you have version 4 or later (`snap install snapcraft --classic`)
+NOTE: These libraries can require additional installations if you haven't such. We have tested only with listed libraries versions, however, it can be possible to build with newer or older versions as well.
+- `cmake>=3.14` cross-platform software for managing the build process
+- `gtk>=3.22` and `gtkmm>=3.22` GUI library and C++ bindings
+- `glib>=2.56` and `glibmm>=2.56` low-level system library written in C and C++ bindings
+- `gstreamer, gstreamer-base-plugins, gstreamer-good-plugins, gstreamer-bad-plugins>=1.14` multimedia framerwork for audio/video playback with plugins
+- `gstreamer1.0-libav`, `gstreamer1.0-gtk3`, `gstreamer1.0-gl`, `gstreamer1.0-vaapi`, `gstreamer1.0-alsa`, `gstreamer1.0-pulseaudio` needed for running/accelerating video content
+- `cryptopp=8.1` for crypto utils (RSA, RC4 etc.)
+- `cryptopp-pem`that is compatiable with `cryptopp` version needed for PEM key format
+- `zeromq=4.3` distributed messaging
+- `spdlog=1.4.1` logging library
+- `gtest=1.8.1` for tests
+- `webkit2gtk>=2.28.4` web content rendering
+- `Boost.System, Boost.Filesystem, Boost.Date_Time, Boost.Thread=1.70` 
+
+### Building with Docker (only for Ubuntu 18.04)
+- Install Docker
 - Clone this repository
-- Run `snapcraft` in the root of the repository
-- A `.snap` file will be created which you can use to install from
-
-
-# Debugging
-We provide a VSCode dev container that has everything needed to build/debug the application using VSCode. This devcontainer uses a base image which is built from the `Dockerfile` in the root folder.
-
-To debug this application using VSCode.
-
-1. Copy the settings folder from a working player install into the `/build/bin` folder, making sure you have `cmsSettings.xml` and `playerSettings.xml`. 
-2. Open `cmsSettings.xml` and adjust the `localLibrary` setting to be `/workspaces/vscode/build/bin/library`.
-3. Open the application directory using the remote containers plugin.
-4. Go to the aplication debug extesion at left panel and click on the green play button.
-
-Tutorial video: https://user-images.githubusercontent.com/6628028/162645464-5eadcb2b-a53a-450e-805f-9589fba6f8f0.mp4
-
-[Issue 260](https://github.com/xibosignage/xibo-linux/issues/260) will improve steps 1 and 2 so that the options app can be used.
+- Run `sudo docker build -t xibo-linux .` in the root of the repository
+- `docker run -v /path/to/local/clone/build:/build xibo-linux`
+- The Player binaries will be built and output in to your `build` directory

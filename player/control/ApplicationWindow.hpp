@@ -1,6 +1,6 @@
 #pragma once
 
-#include "control/status/StatusInfo.hpp"
+#include "control/StatusInfo.hpp"
 #include "control/widgets/Image.hpp"
 #include "control/widgets/OverlayContainer.hpp"
 #include "control/widgets/StatusScreenFactory.hpp"
@@ -18,7 +18,7 @@ template <typename Window>
 class ApplicationWindow : public Window
 {
     static constexpr const double StatusScreenScaleX = 0.5;
-    static constexpr const double StatusScreenScaleY = 0.9;
+    static constexpr const double StatusScreenScaleY = 1;
     static constexpr const int MinStatusScreenWidth = 160;
     static constexpr const int MinStatusScreenHeight = 120;
     static constexpr const int DefaultPos = 0;
@@ -72,10 +72,6 @@ public:
             setMainLayout(splashScreen);
             splashScreen->show();
         }
-        catch (PlayerRuntimeError& e)
-        {
-            Log::error("[SplashScreen] {}", e.message());
-        }
         catch (std::exception& e)
         {
             Log::error("[SplashScreen] {}", e.what());
@@ -92,17 +88,14 @@ public:
         return statusScreen_->exitWithoutRestartRequested();
     }
 
-    void updateStatusScreen(const StatusInfo& info, const std::vector<std::string>& files)
+    void updateStatusScreen(const StatusInfo& info)
     {
-        statusScreen_->setMainInfo(info.toString());
-        statusScreen_->setInvalidFiles(files);
+        statusScreen_->setText(info.toString());
     }
 
     void setSize(int width, int height) override
     {
-        auto [adjustedWidth, adjustedHeight] = adjustSize(width, height);
-
-        if (shouldBeFullscreen(adjustedWidth, adjustedHeight))
+        if (shouldBeFullscreen(width, height))
         {
             Window::fullscreen();
         }
@@ -112,7 +105,7 @@ public:
             {
                 Window::unfullscreen();
             }
-            Window::setSize(adjustedWidth, adjustedHeight);
+            Window::setSize(width, height);
         }
 
         statusScreen_->setSize(static_cast<int>(this->width() * StatusScreenScaleX),
@@ -125,16 +118,6 @@ private:
             StatusScreenFactory::create(static_cast<Window&>(*this), MinStatusScreenWidth, MinStatusScreenHeight))
     {
         assert(statusScreen_);
-    }
-
-    std::pair<int, int> adjustSize(int width, int height)
-    {
-        if (width < 0 || height < 0)
-        {
-            Log::error("[ApplicationWindow] Negative size is not allowed, falling back to fullscreen mode");
-            return {0, 0};
-        }
-        return {width, height};
     }
 
     void setMainContainer(const std::shared_ptr<Xibo::OverlayContainer>& widget)
@@ -156,7 +139,7 @@ private:
         if (key == StatusScreenKey)
         {
             statusScreenShown_();
-            statusScreen_->showAll();
+            statusScreen_->show();
         }
     }
 

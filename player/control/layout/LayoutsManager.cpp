@@ -4,18 +4,17 @@
 #include "control/layout/OverlayLayoutParser.hpp"
 #include "control/widgets/Widget.hpp"
 
+#include "common/fs/FileCache.hpp"
 #include "common/logger/Logging.hpp"
-#include "common/storage/FileCache.hpp"
 #include "schedule/Scheduler.hpp"
-#include "stat/Recorder.hpp"
+#include "stat/StatsRecorder.hpp"
 
 #include "config/AppConfig.hpp"
 
-LayoutsManager::LayoutsManager(Scheduler& scheduler,
-                               Stats::Recorder& statsRecorder,
-                               FileCache& fileCache,
-                               bool statsEnabled) :
-    scheduler_(scheduler), statsRecorder_(statsRecorder), fileCache_(fileCache), statsEnabled_{statsEnabled}
+LayoutsManager::LayoutsManager(Scheduler& scheduler, StatsRecorder& statsRecorder, FileCache& fileCache) :
+    scheduler_(scheduler),
+    statsRecorder_(statsRecorder),
+    fileCache_(fileCache)
 {
     scheduler_.layoutUpdated().connect(std::bind(&LayoutsManager::fetchMainLayout, this));
     scheduler_.overlaysUpdated().connect(std::bind(&LayoutsManager::fetchOverlays, this));
@@ -79,43 +78,21 @@ void LayoutsManager::fetchOverlays()
     overlaysFetched_(overlays);
 }
 
-void LayoutsManager::statsEnabled(bool enable)
-{
-    statsEnabled_ = enable;
-}
-
 template <typename LayoutParser>
 std::unique_ptr<Xibo::MainLayout> LayoutsManager::createLayout(int layoutId)
 {
     try
     {
-        LayoutParser parser{statsEnabled_};
+        LayoutParser parser;
         auto layout = parser.parseBy(layoutId);
         auto scheduleId = scheduler_.scheduleIdBy(layoutId);
 
-        layout->statReady().connect([this, layoutId, scheduleId](const Stats::PlayingTime& interval) {
-            try
+        layout->statReady().connect(
+            [=](const PlayingStat& stat) { statsRecorder_.addLayoutStat(scheduleId, layoutId, stat); });
+        layout->mediaStatsReady().connect([=](const MediaPlayingStats& stats) {
+            for (auto&& [mediaId, interval] : stats)
             {
-                statsRecorder_.addLayoutRecord(Stats::LayoutRecord::create(scheduleId, layoutId, interval));
-            }
-            catch (const std::exception& e)
-            {
-                Log::error("[LayoutsManager] {}", e.what());
-            }
-        });
-        layout->mediaStatsReady().connect([this, layoutId, scheduleId](const MediaPlayingTime& intervals) {
-            try
-            {
-                Stats::MediaRecords records;
-                for (auto&& [mediaId, interval] : intervals)
-                {
-                    records.add(Stats::MediaRecord::create(scheduleId, layoutId, mediaId, interval));
-                }
-                statsRecorder_.addMediaRecords(std::move(records));
-            }
-            catch (const std::exception& e)
-            {
-                Log::error("[LayoutsManager] {}", e.what());
+                statsRecorder_.addMediaStat(scheduleId, layoutId, mediaId, interval);
             }
         });
 

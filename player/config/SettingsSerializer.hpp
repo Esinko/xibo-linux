@@ -1,35 +1,35 @@
 #pragma once
 
 #include "common/NamedField.hpp"
+#include "common/Parsing.hpp"
 #include "common/PlayerRuntimeError.hpp"
-#include "common/parsing/XmlDefaultFileHandler.hpp"
-#include "common/parsing/XmlFileLoaderMissingRoot.hpp"
+#include "common/fs/FilePath.hpp"
+#include "common/fs/FileSystem.hpp"
 
 template <typename Settings>
-class SettingsSerializer : public XmlDefaultFileHandler
+class SettingsSerializer
 {
-    static inline const NodePath RootNode{"settings"};
-    static inline const NodePath VersionAttr = Parsing::xmlAttr("version");
-
 public:
     struct Error : PlayerRuntimeError
     {
         using PlayerRuntimeError::PlayerRuntimeError;
     };
 
-    virtual void loadSettingsFrom(const FilePath& file, Settings& settings) = 0;
-    virtual void saveSettingsTo(const FilePath& file, const Settings& settings) = 0;
+    virtual void loadFrom(const FilePath& file, Settings& settings) = 0;
+    virtual void saveTo(const FilePath& file, const Settings& settings) = 0;
 
 protected:
     template <typename... Args>
-    void loadFromImpl(const XmlNode& tree, Args&... fields)
+    void loadFromImpl(const FilePath& file, Args&... fields)
     {
         using namespace std::string_literals;
 
+        if (!FileSystem::exists(file)) return;
         try
         {
-            auto root = tree.get_child(RootNode);
-            (loadField(root, fields, std::make_index_sequence<fields.size()>{}), ...);
+            auto tree = Parsing::xmlFrom(file);
+
+            (loadField(tree, fields, std::make_index_sequence<fields.size()>{}), ...);
         }
         catch (std::exception& e)
         {
@@ -51,14 +51,21 @@ protected:
     }
 
     template <typename... Args>
-    XmlNode saveToImpl(const Args&... fields)
+    void saveToImpl(const FilePath& file, const Args&... fields)
     {
-        XmlNode tree;
+        using namespace std::string_literals;
 
-        auto& root = tree.add_child(RootNode, {});
-        (saveField(root, fields, std::make_index_sequence<fields.size()>{}), ...);
+        try
+        {
+            XmlNode tree;
+            (saveField(tree, fields, std::make_index_sequence<fields.size()>{}), ...);
 
-        return tree;
+            Parsing::xmlTreeToFile(file, tree);
+        }
+        catch (std::exception& e)
+        {
+            throw SettingsSerializer::Error{"Settings", "Save settings error: "s + e.what()};
+        }
     }
 
     template <typename... Args, size_t... Is>
@@ -72,16 +79,5 @@ protected:
         {
             (node.put(field.template name<Is>(), field.template value<Is>()), ...);
         }
-    }
-
-    NodePath versionAttributePath() const override
-    {
-        return RootNode / VersionAttr;
-    }
-
-    std::unique_ptr<XmlFileLoader> backwardCompatibleLoader(const XmlDocVersion& version) const override
-    {
-        if (version == XmlDocVersion{"1"}) return std::make_unique<XmlFileLoaderMissingRoot>(RootNode);
-        return nullptr;
     }
 };

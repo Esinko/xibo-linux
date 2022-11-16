@@ -5,14 +5,14 @@
 class AppConfig
 {
 public:
-    static std::string version();
-    static std::string releaseVersion();      // TODO: strong type
+    static std::string version();      // TODO: strong type
     static std::string codeVersion();  // TODO: strong type
+
+    static std::string mainXmrChannel();
 
     static FilePath resourceDirectory();
     static void resourceDirectory(const FilePath& directory);
-    static FilePath execDirectory();
-    static FilePath additionalResourcesDirectory();
+    static FilePath buildDirectory();
     static FilePath configDirectory();
 
 #ifdef SNAP_ENABLED
@@ -32,7 +32,6 @@ public:
     static FilePath playerSettingsPath();
     static FilePath schedulePath();
     static FilePath cachePath();
-    static FilePath statsCache();
 
     static std::string playerBinary();
     static std::string optionsBinary();

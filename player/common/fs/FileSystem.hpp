@@ -3,7 +3,6 @@
 #include <memory>
 #include <set>
 
-struct StorageUsageInfo;
 class FilePath;
 
 class FileSystem
@@ -21,5 +20,4 @@ public:
     static FilePath currentPath();
     static std::string readFromFile(const FilePath& path);
     static void writeToFile(const FilePath& path, const std::string& content);
-    static StorageUsageInfo storageUsageFor(const FilePath& path);
 };
